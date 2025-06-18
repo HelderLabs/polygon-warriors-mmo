@@ -5,6 +5,7 @@ class GameManager {
         this.ctx = null;
         this.lastUpdate = Date.now();
         this.running = false;
+        // this.spriteManager = new SpriteManager();  // updated
     }
 
     async initializeGame() {
