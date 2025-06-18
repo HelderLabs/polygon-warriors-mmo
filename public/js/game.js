@@ -1,4 +1,4 @@
-console.log("🎨 SpriteManager loading...");
+// console.log("🎨 SpriteManager loading...");
 // Enhanced Player Sprite System for Polygon Warriors
 class SpriteManager {
     constructor() {
@@ -543,68 +543,76 @@ class GameManager {
         }
     }
 
-    drawPlayers() {
-        // Draw other players
-        gameState.players.forEach(player => {
-            this.drawPlayer(player, false);
-        });
+drawPlayer(player, isSelf) {
+    // DEBUG: Check if sprite system is working
+    console.log("🎨 Drawing player:", {
+        spriteManager: !!this.spriteManager,
+        spriteType: this.spriteManager?.getPlayerSpriteType(player, isSelf),
+        playerState: {
+            isMoving: player.isMoving,
+            facing: player.facing
+        }
+    });
 
-        // Draw self
-        this.drawPlayer(gameState.player, true);
+    const ctx = this.ctx;
+    
+    // Determine sprite type and animation
+    const spriteType = this.spriteManager.getPlayerSpriteType(player, isSelf);
+    let animation = 'idle';
+    let facing = player.facing || 1;
+
+    // Determine animation based on player state
+    if (player.isMoving) {
+        animation = 'walk';
+    } else if (player.isAttacking) {
+        animation = 'attack';
+    } else if (player.isCasting) {
+        animation = 'cast';
     }
 
-    drawPlayer(player, isSelf) {
-        const ctx = this.ctx;
-        
-        // Determine sprite type and animation
-        const spriteType = this.spriteManager.getPlayerSpriteType(player, isSelf);
-        let animation = 'idle';
-        let facing = player.facing || 1;
+    // DEBUG: Check sprite availability
+    console.log("🎨 Sprite info:", {
+        spriteType,
+        animation,
+        facing,
+        spriteExists: !!this.spriteManager.sprites[spriteType]
+    });
 
-        // Determine animation based on player state
-        if (player.isMoving) {
-            animation = 'walk';
-        } else if (player.isAttacking) {
-            animation = 'attack';
-        } else if (player.isCasting) {
-            animation = 'cast';
-        }
+    // Draw the sprite
+    this.spriteManager.drawSprite(ctx, spriteType, player.x, player.y, animation, facing);
 
-        // Draw the sprite
-        this.spriteManager.drawSprite(ctx, spriteType, player.x, player.y, animation, facing);
-
-        // Shield effect
-        if (isSelf && player.hasShield) {
-            ctx.strokeStyle = '#3742fa';
-            ctx.lineWidth = 3;
-            ctx.setLineDash([5, 5]);
-            ctx.beginPath();
-            ctx.arc(player.x, player.y, 20, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
-
-        // Health bar (positioned above sprite)
-        const barWidth = 30;
-        const barHeight = 4;
-        const barX = player.x - barWidth / 2;
-        const barY = player.y - 20;
-
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(barX, barY, barWidth, barHeight);
-        
-        ctx.fillStyle = player.health > 50 ? '#38ef7d' : player.health > 25 ? '#feca57' : '#ff6b6b';
-        ctx.fillRect(barX, barY, (player.health / 100) * barWidth, barHeight);
-
-        // Player name (positioned above health bar)
-        ctx.fillStyle = '#fff';
-        ctx.font = '12px Courier New';
-        ctx.textAlign = 'center';
-        ctx.strokeStyle = '#000';
+    // Shield effect
+    if (isSelf && player.hasShield) {
+        ctx.strokeStyle = '#3742fa';
         ctx.lineWidth = 3;
-        ctx.strokeText(player.name || 'Warrior', player.x, player.y - 25);
-        ctx.fillText(player.name || 'Warrior', player.x, player.y - 25);
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, 20, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
     }
+
+    // Health bar (positioned above sprite)
+    const barWidth = 30;
+    const barHeight = 4;
+    const barX = player.x - barWidth / 2;
+    const barY = player.y - 20;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(barX, barY, barWidth, barHeight);
+    
+    ctx.fillStyle = player.health > 50 ? '#38ef7d' : player.health > 25 ? '#feca57' : '#ff6b6b';
+    ctx.fillRect(barX, barY, (player.health / 100) * barWidth, barHeight);
+
+    // Player name (positioned above health bar)
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px Courier New';
+    ctx.textAlign = 'center';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.strokeText(player.name || 'Warrior', player.x, player.y - 25);
+    ctx.fillText(player.name || 'Warrior', player.x, player.y - 25);
+}
 
     performAttack(x, y) {
         if (gameState.player.mana < 15) {
