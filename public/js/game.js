@@ -1,6 +1,4 @@
 // Enhanced Player Sprite System for Polygon Warriors
-// Add this to your public/js/game.js file
-
 class SpriteManager {
     constructor() {
         this.sprites = {};
