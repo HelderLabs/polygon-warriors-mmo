@@ -113,6 +113,11 @@ class EnemyAI {
                 break;
         }
 
+        // Keep enemies within map boundaries
+        const canvas = gameState.canvas;
+        enemy.x = Math.max(50, Math.min(canvas.width - 50, enemy.x));
+        enemy.y = Math.max(50, Math.min(canvas.height - 50, enemy.y));
+
         // Check wall collision and revert if needed
         if (terrainManager.checkWallCollision(enemy)) {
             enemy.x = oldX;
@@ -138,13 +143,25 @@ class EnemyAI {
         const targetX = aiData.patrolCenter.x + Math.cos(aiData.patrolAngle) * aiData.patrolRadius;
         const targetY = aiData.patrolCenter.y + Math.sin(aiData.patrolAngle) * aiData.patrolRadius;
         
-        const dx = targetX - enemy.x;
-        const dy = targetY - enemy.y;
+        // Keep patrol within map bounds
+        const canvas = gameState.canvas;
+        const boundedTargetX = Math.max(100, Math.min(canvas.width - 100, targetX));
+        const boundedTargetY = Math.max(100, Math.min(canvas.height - 100, targetY));
+        
+        const dx = boundedTargetX - enemy.x;
+        const dy = boundedTargetY - enemy.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
         if (distance > 5) {
             enemy.x += (dx / distance) * aiData.speed * deltaTime;
             enemy.y += (dy / distance) * aiData.speed * deltaTime;
+        }
+
+        // If patrol center is too close to edge, move it inward
+        if (aiData.patrolCenter.x < 200 || aiData.patrolCenter.x > canvas.width - 200 ||
+            aiData.patrolCenter.y < 200 || aiData.patrolCenter.y > canvas.height - 200) {
+            aiData.patrolCenter.x = Math.max(200, Math.min(canvas.width - 200, aiData.patrolCenter.x));
+            aiData.patrolCenter.y = Math.max(200, Math.min(canvas.height - 200, aiData.patrolCenter.y));
         }
     }
 
@@ -257,6 +274,85 @@ class EnemyAI {
 
     calculateDistance(pos1, pos2) {
         return Math.sqrt(Math.pow(pos2.x - pos1.x, 2) + Math.pow(pos2.y - pos1.y, 2));
+    }
+
+    drawMinimap() {
+        const ctx = this.ctx;
+        const minimapSize = 150;
+        const minimapX = this.canvas.width - minimapSize - 20;
+        const minimapY = 20;
+        
+        // Draw minimap background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(minimapX, minimapY, minimapSize, minimapSize);
+        
+        ctx.strokeStyle = '#38ef7d';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(minimapX, minimapY, minimapSize, minimapSize);
+        
+        // Draw minimap title
+        ctx.fillStyle = '#fff';
+        ctx.font = '12px Courier New';
+        ctx.textAlign = 'center';
+        ctx.fillText('ENEMIES', minimapX + minimapSize/2, minimapY - 5);
+        
+        // Scale factors
+        const scaleX = minimapSize / this.canvas.width;
+        const scaleY = minimapSize / this.canvas.height;
+        
+        // Draw player on minimap
+        const playerMinimapX = minimapX + (gameState.player.x * scaleX);
+        const playerMinimapY = minimapY + (gameState.player.y * scaleY);
+        
+        ctx.fillStyle = '#38ef7d';
+        ctx.beginPath();
+        ctx.arc(playerMinimapX, playerMinimapY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw enemies on minimap with different colors
+        gameState.players.forEach(player => {
+            if (player.isEnemy) {
+                const enemyMinimapX = minimapX + (player.x * scaleX);
+                const enemyMinimapY = minimapY + (player.y * scaleY);
+                
+                // Different colors for different enemy types
+                switch (player.type) {
+                    case 'goblin': ctx.fillStyle = '#95a5a6'; break;
+                    case 'orc': ctx.fillStyle = '#e67e22'; break;
+                    case 'skeleton': ctx.fillStyle = '#ecf0f1'; break;
+                    default: ctx.fillStyle = '#ff6b6b'; break;
+                }
+                
+                ctx.beginPath();
+                ctx.arc(enemyMinimapX, enemyMinimapY, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw state indicator
+                const aiData = this.enemyAI.enemies.get(player.id);
+                if (aiData) {
+                    ctx.strokeStyle = aiData.state === 'chase' ? '#ff0000' : 
+                                    aiData.state === 'attack' ? '#ff4444' : 
+                                    aiData.state === 'flee' ? '#ffff00' : '#888888';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(enemyMinimapX, enemyMinimapY, 4, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+        });
+        
+        // Draw legend
+        const legendY = minimapY + minimapSize + 15;
+        ctx.font = '10px Courier New';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#38ef7d';
+        ctx.fillText('● You', minimapX, legendY);
+        ctx.fillStyle = '#95a5a6';
+        ctx.fillText('● Goblin', minimapX, legendY + 12);
+        ctx.fillStyle = '#e67e22';
+        ctx.fillText('● Orc', minimapX + 50, legendY + 12);
+        ctx.fillStyle = '#ecf0f1';
+        ctx.fillText('● Skeleton', minimapX + 85, legendY + 12);
     }
 }
 
@@ -725,6 +821,7 @@ class GameManager {
         terrainManager.drawTerrain();
         effectsManager.drawEffects();
         this.drawPlayers();
+        this.drawMinimap(); // Add minimap to show enemy positions
     }
 
     drawGrid() {
