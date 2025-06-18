@@ -1,3 +1,4 @@
+console.log("🎨 SpriteManager loading...");
 // Enhanced Player Sprite System for Polygon Warriors
 class SpriteManager {
     constructor() {
