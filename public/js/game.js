@@ -292,31 +292,6 @@ class SpriteManager {
         // Bone legs (doubled)
         ctx.fillRect(centerX - 2, centerY + 10, 2, 8);
         ctx.fillRect(centerX + 2, centerY + 10, 2, 8);
-    }ctx.fillRect(centerX - 1, centerY, 3, 5);
-        // Ribs
-        ctx.fillStyle = '#95a5a6';
-        ctx.fillRect(centerX - 2, centerY + 1, 1, 1);
-        ctx.fillRect(centerX + 2, centerY + 1, 1, 1);
-        ctx.fillRect(centerX - 2, centerY + 3, 1, 1);
-        ctx.fillRect(centerX + 2, centerY + 3, 1, 1);
-
-        // Skull
-        ctx.fillStyle = primaryColor;
-        ctx.fillRect(centerX - 2, centerY - 4, 4, 4);
-
-        // Eye sockets (glowing)
-        ctx.fillStyle = '#e74c3c';
-        ctx.fillRect(centerX - 1, centerY - 3, 1, 1);
-        ctx.fillRect(centerX + 1, centerY - 3, 1, 1);
-
-        // Bone arms
-        ctx.fillStyle = primaryColor;
-        ctx.fillRect(centerX - 3, centerY + 1, 1, 3);
-        ctx.fillRect(centerX + 2, centerY + 1, 1, 3);
-
-        // Bone legs
-        ctx.fillRect(centerX - 1, centerY + 5, 1, 4);
-        ctx.fillRect(centerX + 1, centerY + 5, 1, 4);
     }
 
     drawSprite(ctx, spriteType, x, y, animation = 'idle', facing = 1) {
@@ -627,7 +602,7 @@ class GameManager {
         const barWidth = 30;
         const barHeight = 4;
         const barX = player.x - barWidth / 2;
-        const barY = player.y - 20;
+        const barY = player.y - 30; // Moved up for bigger sprites
 
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
         ctx.fillRect(barX, barY, barWidth, barHeight);
@@ -641,8 +616,8 @@ class GameManager {
         ctx.textAlign = 'center';
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 3;
-        ctx.strokeText(player.name || 'Warrior', player.x, player.y - 25);
-        ctx.fillText(player.name || 'Warrior', player.x, player.y - 25);
+        ctx.strokeText(player.name || 'Warrior', player.x, player.y - 35);
+        ctx.fillText(player.name || 'Warrior', player.x, player.y - 35);
     }
 
     performAttack(x, y) {
