@@ -1,4 +1,5 @@
-// console.log("🎨 SpriteManager loading...");
+console.log("🎨 SpriteManager loading...");
+
 // Enhanced Player Sprite System for Polygon Warriors
 class SpriteManager {
     constructor() {
@@ -18,6 +19,7 @@ class SpriteManager {
         };
         this.animationSpeed = 200; // ms per frame
         this.createSprites();
+        console.log("✅ SpriteManager created with sprites:", Object.keys(this.sprites));
     }
 
     createSprites() {
@@ -60,6 +62,7 @@ class SpriteManager {
         }
 
         this.sprites[type] = canvas;
+        console.log(`🏰 Created warrior sprite: ${type}`);
     }
 
     drawWarriorFrame(ctx, x, y, primaryColor, secondaryColor, accentColor, animation, frame = 0) {
@@ -172,6 +175,7 @@ class SpriteManager {
         }
 
         this.sprites[type] = canvas;
+        console.log(`👹 Created enemy sprite: ${type}`);
     }
 
     drawEnemyFrame(ctx, x, y, enemyType, primaryColor, secondaryColor, accentColor, animation, frame = 0) {
@@ -291,7 +295,10 @@ class SpriteManager {
     }
 
     drawSprite(ctx, spriteType, x, y, animation = 'idle', facing = 1) {
-        if (!this.sprites[spriteType]) return;
+        if (!this.sprites[spriteType]) {
+            console.log("❌ Sprite not found for type:", spriteType);
+            return;
+        }
 
         const sprite = this.sprites[spriteType];
         const frameIndex = this.getCurrentFrame(spriteType, animation);
@@ -339,6 +346,7 @@ class GameManager {
         this.lastUpdate = Date.now();
         this.running = false;
         this.spriteManager = new SpriteManager();
+        console.log("🎮 GameManager created with SpriteManager");
     }
 
     async initializeGame() {
@@ -543,76 +551,68 @@ class GameManager {
         }
     }
 
-drawPlayer(player, isSelf) {
-    // DEBUG: Check if sprite system is working
-    console.log("🎨 Drawing player:", {
-        spriteManager: !!this.spriteManager,
-        spriteType: this.spriteManager?.getPlayerSpriteType(player, isSelf),
-        playerState: {
-            isMoving: player.isMoving,
-            facing: player.facing
+    drawPlayers() {
+        // Draw other players
+        gameState.players.forEach(player => {
+            this.drawPlayer(player, false);
+        });
+
+        // Draw self
+        this.drawPlayer(gameState.player, true);
+    }
+
+    drawPlayer(player, isSelf) {
+        const ctx = this.ctx;
+        
+        // Determine sprite type and animation
+        const spriteType = this.spriteManager.getPlayerSpriteType(player, isSelf);
+        let animation = 'idle';
+        let facing = player.facing || 1;
+
+        // Determine animation based on player state
+        if (player.isMoving) {
+            animation = 'walk';
+        } else if (player.isAttacking) {
+            animation = 'attack';
+        } else if (player.isCasting) {
+            animation = 'cast';
         }
-    });
 
-    const ctx = this.ctx;
-    
-    // Determine sprite type and animation
-    const spriteType = this.spriteManager.getPlayerSpriteType(player, isSelf);
-    let animation = 'idle';
-    let facing = player.facing || 1;
+        // Draw the sprite
+        this.spriteManager.drawSprite(ctx, spriteType, player.x, player.y, animation, facing);
 
-    // Determine animation based on player state
-    if (player.isMoving) {
-        animation = 'walk';
-    } else if (player.isAttacking) {
-        animation = 'attack';
-    } else if (player.isCasting) {
-        animation = 'cast';
-    }
+        // Shield effect
+        if (isSelf && player.hasShield) {
+            ctx.strokeStyle = '#3742fa';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, 20, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
 
-    // DEBUG: Check sprite availability
-    console.log("🎨 Sprite info:", {
-        spriteType,
-        animation,
-        facing,
-        spriteExists: !!this.spriteManager.sprites[spriteType]
-    });
+        // Health bar (positioned above sprite)
+        const barWidth = 30;
+        const barHeight = 4;
+        const barX = player.x - barWidth / 2;
+        const barY = player.y - 20;
 
-    // Draw the sprite
-    this.spriteManager.drawSprite(ctx, spriteType, player.x, player.y, animation, facing);
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(barX, barY, barWidth, barHeight);
+        
+        ctx.fillStyle = player.health > 50 ? '#38ef7d' : player.health > 25 ? '#feca57' : '#ff6b6b';
+        ctx.fillRect(barX, barY, (player.health / 100) * barWidth, barHeight);
 
-    // Shield effect
-    if (isSelf && player.hasShield) {
-        ctx.strokeStyle = '#3742fa';
+        // Player name (positioned above health bar)
+        ctx.fillStyle = '#fff';
+        ctx.font = '12px Courier New';
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = '#000';
         ctx.lineWidth = 3;
-        ctx.setLineDash([5, 5]);
-        ctx.beginPath();
-        ctx.arc(player.x, player.y, 20, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.strokeText(player.name || 'Warrior', player.x, player.y - 25);
+        ctx.fillText(player.name || 'Warrior', player.x, player.y - 25);
     }
-
-    // Health bar (positioned above sprite)
-    const barWidth = 30;
-    const barHeight = 4;
-    const barX = player.x - barWidth / 2;
-    const barY = player.y - 20;
-
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(barX, barY, barWidth, barHeight);
-    
-    ctx.fillStyle = player.health > 50 ? '#38ef7d' : player.health > 25 ? '#feca57' : '#ff6b6b';
-    ctx.fillRect(barX, barY, (player.health / 100) * barWidth, barHeight);
-
-    // Player name (positioned above health bar)
-    ctx.fillStyle = '#fff';
-    ctx.font = '12px Courier New';
-    ctx.textAlign = 'center';
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 3;
-    ctx.strokeText(player.name || 'Warrior', player.x, player.y - 25);
-    ctx.fillText(player.name || 'Warrior', player.x, player.y - 25);
-}
 
     performAttack(x, y) {
         if (gameState.player.mana < 15) {
@@ -683,4 +683,3 @@ const gameManager = new GameManager();
 // Initialize when page loads
 window.addEventListener('load', async () => {
     await gameManager.initializeGame();
-});
