@@ -409,7 +409,7 @@ class GameManager {
         this.ctx = null;
         this.lastUpdate = Date.now();
         this.running = false;
-        // this.spriteManager = new SpriteManager();  // updated
+        this.spriteManager = new SpriteManager();  // updated
     }
 
     async initializeGame() {
@@ -529,6 +529,15 @@ class GameManager {
         if (gameState.keys['d'] || gameState.keys['arrowright']) {
             player.x = Math.min(this.canvas.width - 20, player.x + speed * deltaTime);
         }
+        // Add facing direction tracking
+        if (gameState.keys['a'] || gameState.keys['arrowleft']) {
+            gameState.player.facing = -1;
+        } else if (gameState.keys['d'] || gameState.keys['arrowright']) {
+            gameState.player.facing = 1;
+        }
+        
+        // Track movement state
+        gameState.player.isMoving = gameState.keys['w'] || gameState.keys['a'] || gameState.keys['s'] || gameState.keys['d'];
 
         // Check collision with walls
         if (terrainManager.checkWallCollision(player)) {
