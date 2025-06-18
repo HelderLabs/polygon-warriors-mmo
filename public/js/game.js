@@ -1,4 +1,4 @@
-console.log("🎨 SpriteManager loading..."); // TESTING
+console.log("🎨 SpriteManager loading...");
 
 // Enhanced Player Sprite System for Polygon Warriors
 class SpriteManager {
@@ -36,8 +36,8 @@ class SpriteManager {
 
     createWarriorSprite(type, primaryColor, secondaryColor, accentColor) {
         const canvas = document.createElement('canvas');
-        canvas.width = 192; // 24px * 8 frames
-        canvas.height = 24;
+        canvas.width = 384; // 48px * 8 frames (doubled size)
+        canvas.height = 48;
         const ctx = canvas.getContext('2d');
         
         // Disable image smoothing for pixel art
@@ -48,17 +48,17 @@ class SpriteManager {
         
         // Frames 1-3: Walking animation
         for (let i = 1; i <= 3; i++) {
-            this.drawWarriorFrame(ctx, i * 24, 0, primaryColor, secondaryColor, accentColor, 'walk', i);
+            this.drawWarriorFrame(ctx, i * 48, 0, primaryColor, secondaryColor, accentColor, 'walk', i);
         }
         
         // Frames 4-6: Attack animation
         for (let i = 0; i < 3; i++) {
-            this.drawWarriorFrame(ctx, (4 + i) * 24, 0, primaryColor, secondaryColor, accentColor, 'attack', i);
+            this.drawWarriorFrame(ctx, (4 + i) * 48, 0, primaryColor, secondaryColor, accentColor, 'attack', i);
         }
         
         // Frames 7-9: Casting animation
         for (let i = 0; i < 3; i++) {
-            this.drawWarriorFrame(ctx, (7 + i) * 24, 0, primaryColor, secondaryColor, accentColor, 'cast', i);
+            this.drawWarriorFrame(ctx, (7 + i) * 48, 0, primaryColor, secondaryColor, accentColor, 'cast', i);
         }
 
         this.sprites[type] = canvas;
@@ -66,97 +66,97 @@ class SpriteManager {
     }
 
     drawWarriorFrame(ctx, x, y, primaryColor, secondaryColor, accentColor, animation, frame = 0) {
-        const centerX = x + 12;
-        const centerY = y + 12;
+        const centerX = x + 24; // Doubled from 12
+        const centerY = y + 24; // Doubled from 12
 
-        // Body (4x6 rectangle)
+        // Body (8x12 rectangle - doubled)
         ctx.fillStyle = primaryColor;
-        ctx.fillRect(centerX - 2, centerY - 1, 4, 6);
+        ctx.fillRect(centerX - 4, centerY - 2, 8, 12);
 
-        // Head (4x4 square)
+        // Head (8x8 square - doubled)
         ctx.fillStyle = secondaryColor;
-        ctx.fillRect(centerX - 2, centerY - 5, 4, 4);
+        ctx.fillRect(centerX - 4, centerY - 10, 8, 8);
 
-        // Eyes (2 pixels)
+        // Eyes (4 pixels - doubled)
         ctx.fillStyle = '#000';
-        ctx.fillRect(centerX - 1, centerY - 4, 1, 1);
-        ctx.fillRect(centerX + 1, centerY - 4, 1, 1);
+        ctx.fillRect(centerX - 2, centerY - 8, 2, 2);
+        ctx.fillRect(centerX + 2, centerY - 8, 2, 2);
 
-        // Helmet/Crown
+        // Helmet/Crown - doubled
         ctx.fillStyle = accentColor;
-        ctx.fillRect(centerX - 2, centerY - 6, 4, 1);
-        ctx.fillRect(centerX - 1, centerY - 7, 2, 1);
+        ctx.fillRect(centerX - 4, centerY - 12, 8, 2);
+        ctx.fillRect(centerX - 2, centerY - 14, 4, 2);
 
-        // Arms and legs based on animation
+        // Arms and legs based on animation - all doubled
         ctx.fillStyle = primaryColor;
         
         switch (animation) {
             case 'idle':
-                // Arms at sides
-                ctx.fillRect(centerX - 4, centerY, 2, 3);
-                ctx.fillRect(centerX + 2, centerY, 2, 3);
-                // Legs straight
-                ctx.fillRect(centerX - 2, centerY + 5, 1, 4);
-                ctx.fillRect(centerX + 1, centerY + 5, 1, 4);
+                // Arms at sides - doubled
+                ctx.fillRect(centerX - 8, centerY, 4, 6);
+                ctx.fillRect(centerX + 4, centerY, 4, 6);
+                // Legs straight - doubled
+                ctx.fillRect(centerX - 4, centerY + 10, 2, 8);
+                ctx.fillRect(centerX + 2, centerY + 10, 2, 8);
                 break;
                 
             case 'walk':
-                // Animated arms and legs
-                const walkOffset = frame % 2 === 0 ? 1 : -1;
-                // Arms swinging
-                ctx.fillRect(centerX - 4, centerY + walkOffset, 2, 3);
-                ctx.fillRect(centerX + 2, centerY - walkOffset, 2, 3);
-                // Legs stepping
-                ctx.fillRect(centerX - 2, centerY + 5, 1, 4 + walkOffset);
-                ctx.fillRect(centerX + 1, centerY + 5, 1, 4 - walkOffset);
+                // Animated arms and legs - doubled
+                const walkOffset = frame % 2 === 0 ? 2 : -2;
+                // Arms swinging - doubled
+                ctx.fillRect(centerX - 8, centerY + walkOffset, 4, 6);
+                ctx.fillRect(centerX + 4, centerY - walkOffset, 4, 6);
+                // Legs stepping - doubled
+                ctx.fillRect(centerX - 4, centerY + 10, 2, 8 + walkOffset);
+                ctx.fillRect(centerX + 2, centerY + 10, 2, 8 - walkOffset);
                 break;
                 
             case 'attack':
-                // Sword raised
+                // Sword raised - doubled
                 ctx.fillStyle = '#f39c12';
-                ctx.fillRect(centerX + 3, centerY - 3, 1, 6);
+                ctx.fillRect(centerX + 6, centerY - 6, 2, 12);
                 ctx.fillStyle = '#e67e22';
-                ctx.fillRect(centerX + 3, centerY - 4, 1, 1);
-                // Arm extended
+                ctx.fillRect(centerX + 6, centerY - 8, 2, 2);
+                // Arm extended - doubled
                 ctx.fillStyle = primaryColor;
-                ctx.fillRect(centerX + 2, centerY - 1, 3, 2);
-                ctx.fillRect(centerX - 4, centerY, 2, 3);
-                // Legs in battle stance
-                ctx.fillRect(centerX - 3, centerY + 5, 2, 4);
-                ctx.fillRect(centerX + 1, centerY + 5, 1, 4);
+                ctx.fillRect(centerX + 4, centerY - 2, 6, 4);
+                ctx.fillRect(centerX - 8, centerY, 4, 6);
+                // Legs in battle stance - doubled
+                ctx.fillRect(centerX - 6, centerY + 10, 4, 8);
+                ctx.fillRect(centerX + 2, centerY + 10, 2, 8);
                 break;
                 
             case 'cast':
-                // Arms raised for casting
-                ctx.fillRect(centerX - 4, centerY - 2, 2, 3);
-                ctx.fillRect(centerX + 2, centerY - 2, 2, 3);
-                // Magic sparkles around hands
+                // Arms raised for casting - doubled
+                ctx.fillRect(centerX - 8, centerY - 4, 4, 6);
+                ctx.fillRect(centerX + 4, centerY - 4, 4, 6);
+                // Magic sparkles around hands - doubled
                 ctx.fillStyle = '#9b59b6';
-                ctx.fillRect(centerX - 5, centerY - 2, 1, 1);
-                ctx.fillRect(centerX + 4, centerY - 2, 1, 1);
-                ctx.fillRect(centerX - 4, centerY - 3, 1, 1);
-                ctx.fillRect(centerX + 3, centerY - 3, 1, 1);
-                // Legs
+                ctx.fillRect(centerX - 10, centerY - 4, 2, 2);
+                ctx.fillRect(centerX + 8, centerY - 4, 2, 2);
+                ctx.fillRect(centerX - 8, centerY - 6, 2, 2);
+                ctx.fillRect(centerX + 6, centerY - 6, 2, 2);
+                // Legs - doubled
                 ctx.fillStyle = primaryColor;
-                ctx.fillRect(centerX - 2, centerY + 5, 1, 4);
-                ctx.fillRect(centerX + 1, centerY + 5, 1, 4);
+                ctx.fillRect(centerX - 4, centerY + 10, 2, 8);
+                ctx.fillRect(centerX + 2, centerY + 10, 2, 8);
                 break;
         }
 
-        // Weapon or shield based on class
+        // Weapon or shield based on class - doubled
         if (animation !== 'cast') {
-            // Small shield on left arm
+            // Small shield on left arm - doubled
             ctx.fillStyle = '#34495e';
-            ctx.fillRect(centerX - 5, centerY + 1, 2, 2);
+            ctx.fillRect(centerX - 10, centerY + 2, 4, 4);
             ctx.fillStyle = accentColor;
-            ctx.fillRect(centerX - 4, centerY + 1, 1, 1);
+            ctx.fillRect(centerX - 8, centerY + 2, 2, 2);
         }
     }
 
     createEnemySprite(type, primaryColor, secondaryColor, accentColor) {
         const canvas = document.createElement('canvas');
-        canvas.width = 144; // 24px * 6 frames
-        canvas.height = 24;
+        canvas.width = 288; // 48px * 6 frames (doubled)
+        canvas.height = 48;
         const ctx = canvas.getContext('2d');
         
         ctx.imageSmoothingEnabled = false;
@@ -166,12 +166,12 @@ class SpriteManager {
         
         // Frames 1-3: Walking
         for (let i = 1; i <= 3; i++) {
-            this.drawEnemyFrame(ctx, i * 24, 0, type, primaryColor, secondaryColor, accentColor, 'walk', i);
+            this.drawEnemyFrame(ctx, i * 48, 0, type, primaryColor, secondaryColor, accentColor, 'walk', i);
         }
         
         // Frames 4-5: Attack
         for (let i = 0; i < 2; i++) {
-            this.drawEnemyFrame(ctx, (4 + i) * 24, 0, type, primaryColor, secondaryColor, accentColor, 'attack', i);
+            this.drawEnemyFrame(ctx, (4 + i) * 48, 0, type, primaryColor, secondaryColor, accentColor, 'attack', i);
         }
 
         this.sprites[type] = canvas;
@@ -179,8 +179,8 @@ class SpriteManager {
     }
 
     drawEnemyFrame(ctx, x, y, enemyType, primaryColor, secondaryColor, accentColor, animation, frame = 0) {
-        const centerX = x + 12;
-        const centerY = y + 12;
+        const centerX = x + 24; // Doubled from 12
+        const centerY = y + 24; // Doubled from 12
 
         switch (enemyType) {
             case 'goblin':
@@ -196,78 +196,103 @@ class SpriteManager {
     }
 
     drawGoblin(ctx, centerX, centerY, primaryColor, secondaryColor, accentColor, animation, frame) {
-        // Goblin body (smaller than warrior)
+        // Goblin body (smaller than warrior but doubled)
         ctx.fillStyle = primaryColor;
-        ctx.fillRect(centerX - 1, centerY, 3, 5);
+        ctx.fillRect(centerX - 2, centerY, 6, 10);
 
-        // Head (bigger relative to body)
+        // Head (bigger relative to body, doubled)
         ctx.fillStyle = '#8fbc8f';
-        ctx.fillRect(centerX - 2, centerY - 4, 4, 4);
+        ctx.fillRect(centerX - 4, centerY - 8, 8, 8);
 
-        // Large ears
-        ctx.fillRect(centerX - 3, centerY - 3, 1, 2);
-        ctx.fillRect(centerX + 2, centerY - 3, 1, 2);
+        // Large ears (doubled)
+        ctx.fillRect(centerX - 6, centerY - 6, 2, 4);
+        ctx.fillRect(centerX + 4, centerY - 6, 2, 4);
 
-        // Evil red eyes
+        // Evil red eyes (doubled)
         ctx.fillStyle = '#e74c3c';
-        ctx.fillRect(centerX - 1, centerY - 3, 1, 1);
-        ctx.fillRect(centerX + 1, centerY - 3, 1, 1);
+        ctx.fillRect(centerX - 2, centerY - 6, 2, 2);
+        ctx.fillRect(centerX + 2, centerY - 6, 2, 2);
 
-        // Simple cloth
+        // Simple cloth (doubled)
         ctx.fillStyle = accentColor;
-        ctx.fillRect(centerX - 1, centerY + 1, 3, 3);
+        ctx.fillRect(centerX - 2, centerY + 2, 6, 6);
 
-        // Arms and legs for animation
+        // Arms and legs for animation (doubled)
         ctx.fillStyle = '#8fbc8f';
         if (animation === 'walk' && frame % 2 === 1) {
-            ctx.fillRect(centerX - 3, centerY + 1, 1, 2);
-            ctx.fillRect(centerX + 2, centerY, 1, 2);
+            ctx.fillRect(centerX - 6, centerY + 2, 2, 4);
+            ctx.fillRect(centerX + 4, centerY, 2, 4);
         } else {
-            ctx.fillRect(centerX - 3, centerY, 1, 2);
-            ctx.fillRect(centerX + 2, centerY + 1, 1, 2);
+            ctx.fillRect(centerX - 6, centerY, 2, 4);
+            ctx.fillRect(centerX + 4, centerY + 2, 2, 4);
         }
         
-        ctx.fillRect(centerX - 1, centerY + 5, 1, 3);
-        ctx.fillRect(centerX + 1, centerY + 5, 1, 3);
+        ctx.fillRect(centerX - 2, centerY + 10, 2, 6);
+        ctx.fillRect(centerX + 2, centerY + 10, 2, 6);
     }
 
     drawOrc(ctx, centerX, centerY, primaryColor, secondaryColor, accentColor, animation, frame) {
-        // Orc body (larger and bulkier)
+        // Orc body (larger and bulkier, doubled)
         ctx.fillStyle = primaryColor;
-        ctx.fillRect(centerX - 2, centerY - 1, 5, 7);
+        ctx.fillRect(centerX - 4, centerY - 2, 10, 14);
 
-        // Head
+        // Head (doubled)
         ctx.fillStyle = '#8fbc8f';
-        ctx.fillRect(centerX - 2, centerY - 5, 4, 4);
+        ctx.fillRect(centerX - 4, centerY - 10, 8, 8);
 
-        // Tusks
+        // Tusks (doubled)
         ctx.fillStyle = '#ecf0f1';
-        ctx.fillRect(centerX - 1, centerY - 2, 1, 2);
-        ctx.fillRect(centerX + 1, centerY - 2, 1, 2);
+        ctx.fillRect(centerX - 2, centerY - 4, 2, 4);
+        ctx.fillRect(centerX + 2, centerY - 4, 2, 4);
 
-        // Angry red eyes
+        // Angry red eyes (doubled)
         ctx.fillStyle = '#c0392b';
-        ctx.fillRect(centerX - 1, centerY - 4, 1, 1);
-        ctx.fillRect(centerX + 1, centerY - 4, 1, 1);
+        ctx.fillRect(centerX - 2, centerY - 8, 2, 2);
+        ctx.fillRect(centerX + 2, centerY - 8, 2, 2);
 
-        // Armor
+        // Armor (doubled)
         ctx.fillStyle = accentColor;
-        ctx.fillRect(centerX - 2, centerY, 5, 2);
+        ctx.fillRect(centerX - 4, centerY, 10, 4);
 
-        // Large arms
+        // Large arms (doubled)
         ctx.fillStyle = '#8fbc8f';
-        ctx.fillRect(centerX - 4, centerY, 2, 4);
-        ctx.fillRect(centerX + 2, centerY, 2, 4);
+        ctx.fillRect(centerX - 8, centerY, 4, 8);
+        ctx.fillRect(centerX + 4, centerY, 4, 8);
 
-        // Legs
-        ctx.fillRect(centerX - 2, centerY + 6, 2, 3);
-        ctx.fillRect(centerX + 1, centerY + 6, 2, 3);
+        // Legs (doubled)
+        ctx.fillRect(centerX - 4, centerY + 12, 4, 6);
+        ctx.fillRect(centerX + 2, centerY + 12, 4, 6);
     }
 
     drawSkeleton(ctx, centerX, centerY, primaryColor, secondaryColor, accentColor, animation, frame) {
-        // Skeleton ribcage
+        // Skeleton ribcage (doubled)
         ctx.fillStyle = primaryColor;
-        ctx.fillRect(centerX - 1, centerY, 3, 5);
+        ctx.fillRect(centerX - 2, centerY, 6, 10);
+        // Ribs (doubled)
+        ctx.fillStyle = '#95a5a6';
+        ctx.fillRect(centerX - 4, centerY + 2, 2, 2);
+        ctx.fillRect(centerX + 4, centerY + 2, 2, 2);
+        ctx.fillRect(centerX - 4, centerY + 6, 2, 2);
+        ctx.fillRect(centerX + 4, centerY + 6, 2, 2);
+
+        // Skull (doubled)
+        ctx.fillStyle = primaryColor;
+        ctx.fillRect(centerX - 4, centerY - 8, 8, 8);
+
+        // Eye sockets (glowing, doubled)
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillRect(centerX - 2, centerY - 6, 2, 2);
+        ctx.fillRect(centerX + 2, centerY - 6, 2, 2);
+
+        // Bone arms (doubled)
+        ctx.fillStyle = primaryColor;
+        ctx.fillRect(centerX - 6, centerY + 2, 2, 6);
+        ctx.fillRect(centerX + 4, centerY + 2, 2, 6);
+
+        // Bone legs (doubled)
+        ctx.fillRect(centerX - 2, centerY + 10, 2, 8);
+        ctx.fillRect(centerX + 2, centerY + 10, 2, 8);
+    }ctx.fillRect(centerX - 1, centerY, 3, 5);
         // Ribs
         ctx.fillStyle = '#95a5a6';
         ctx.fillRect(centerX - 2, centerY + 1, 1, 1);
@@ -302,8 +327,8 @@ class SpriteManager {
 
         const sprite = this.sprites[spriteType];
         const frameIndex = this.getCurrentFrame(spriteType, animation);
-        const frameWidth = 24;
-        const frameHeight = 24;
+        const frameWidth = 48; // Doubled from 24
+        const frameHeight = 48; // Doubled from 24
 
         // Save context for transformations
         ctx.save();
@@ -334,6 +359,12 @@ class SpriteManager {
     // Helper method to determine player sprite type
     getPlayerSpriteType(player, isCurrentPlayer) {
         if (isCurrentPlayer) return 'player';
+        
+        // Use enemy sprite types for enemies
+        if (player.isEnemy && player.type) {
+            return player.type; // goblin, orc, or skeleton
+        }
+        
         return player.isEnemy ? 'enemy_player' : 'ally';
     }
 }
@@ -649,18 +680,27 @@ class GameManager {
     }
 
     addMockPlayers() {
-        // Add demo players
+        // Add different enemy types instead of demo players
+        const enemyTypes = [
+            { type: 'goblin', name: 'Goblin_Warrior' },
+            { type: 'orc', name: 'Orc_Berserker' },
+            { type: 'skeleton', name: 'Skeleton_Archer' }
+        ];
+
         for (let i = 0; i < 3; i++) {
+            const enemy = enemyTypes[i];
             const mockPlayer = {
-                id: `demo_${i}`,
-                name: `Demo_${i}`,
+                id: `enemy_${i}`,
+                name: enemy.name,
+                type: enemy.type, // Add enemy type
+                isEnemy: true, // Mark as enemy
                 x: Math.random() * (this.canvas.width - 200) + 100,
                 y: Math.random() * (this.canvas.height - 200) + 100,
                 health: 100,
-                level: Math.floor(Math.random() * 5) + 1
+                level: Math.floor(Math.random() * 3) + 1
             };
             
-            // Make sure players don't spawn in walls
+            // Make sure enemies don't spawn in walls
             while (terrainManager.checkWallCollision(mockPlayer)) {
                 mockPlayer.x = Math.random() * (this.canvas.width - 200) + 100;
                 mockPlayer.y = Math.random() * (this.canvas.height - 200) + 100;
