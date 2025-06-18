@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polygon Warriors - Web3 MMO</title>
+    
+    <!-- External Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
+    
+    <!-- Game Stylesheets -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/animations.css">
+    
+    <!-- Additional Animations for Notifications -->
+    <style>
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        
+        .notification {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border-left: 4px solid rgba(255,255,255,0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Wallet Connection Overlay -->
+    <div id="walletOverlay" class="wallet-overlay">
+        <div class="wallet-modal">
+            <h1>🗡️ Polygon Warriors</h1>
+            <p>Connect your Polygon wallet to enter the battlefield</p>
+            <button class="connect-btn" onclick="connectWallet()">Connect MetaMask</button>
+            <div id="walletStatus"></div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading" class="loading" style="display: none;">
+        ⚔️ Entering the Arena...
+    </div>
+
+    <!-- Main Game Container -->
+    <div id="gameContainer" class="game-container">
+        <canvas id="gameCanvas" class="game-canvas"></canvas>
+        
+        <div class="ui-overlay">
+            <!-- HUD -->
+            <div class="hud ui-element">
+                <div><strong>Warrior:</strong> <span id="playerName">Loading...</span></div>
+                <div><strong>Level:</strong> <span id="playerLevel">1</span></div>
+                <div><strong>Gold:</strong> <span id="playerGold">0</span></div>
+                <div class="status-bar">
+                    <div class="health-bar" id="healthBar" style="width: 100%;"></div>
+                </div>
+                <div class="status-bar">
+                    <div class="mana-bar" id="manaBar" style="width: 100%;"></div>
+                </div>
+            </div>
+
+            <!-- Player List -->
+            <div class="player-list ui-element">
+                <h3>Warriors Online</h3>
+                <div id="playerListContent">
+                    <div>Loading players...</div>
+                </div>
+            </div>
+
+            <!-- Chat -->
+            <div class="chat ui-element">
+                <div class="chat-messages" id="chatMessages">
+                    <div style="color: #38ef7d;">Welcome to Polygon Warriors!</div>
+                    <div style="color: #feca57;">Use WASD to move, click to attack</div>
+                    <div style="color: #ff6b6b;">🔥 Fireball burns grass! 🌱</div>
+                    <div style="color: #3742fa;">💬 Type /help for commands</div>
+                </div>
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type message or /help..." maxlength="100">
+            </div>
+
+            <!-- Controls -->
+            <div class="controls ui-element">
+                <h4>Skills</h4>
+                <button class="skill-btn" id="fireballBtn" data-original-text="🔥 Fireball">🔥 Fireball</button>
+                <button class="skill-btn" id="healBtn" data-original-text="💚 Heal">💚 Heal</button>
+                <button class="skill-btn" id="shieldBtn" data-original-text="🛡️ Shield">🛡️ Shield</button>
+                <div style="margin-top: 10px; font-size: 11px; color: #7f8c8d;">
+                    <div>⚔️ Click to attack</div>
+                    <div>🎯 WASD to move</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game State Initialization -->
+    <script>
+        // Initialize global game state
+        let gameState = {
+            connected: false,
+            wallet: null,
+            web3: null,
+            player: {
+                id: null,
+                x: 100,
+                y: 100,
+                health: 100,
+                mana: 100,
+                level: 1,
+                gold: 0,
+                name: '',
+                hasShield: false,
+                shieldExpiry: 0
+            },
+            players: new Map(),
+            canvas: null,
+            ctx: null,
+            keys: {},
+            lastUpdate: Date.now(),
+            terrain: {
+                walls: [],
+                grass: [],
+                destructibleTerrain: []
+            },
+            effects: [],
+            skillCooldowns: {
+                fireball: 0,
+                heal: 0,
+                shield: 0
+            }
+        };
+    </script>
+
+    <!-- Load Game Modules in Dependency Order -->
+    <script src="js/effects.js"></script>
+    <script src="js/terrain.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/wallet.js"></script>
+    <script src="js/game.js"></script>
+
+    <!-- Game Initialization -->
+    <script>
+        // Initialize game when all modules are loaded
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🎮 Initializing Polygon Warriors...');
+            
+            try {
+                // Initialize game manager
+                await gameManager.initializeGame();
+                console.log('✅ Game initialized successfully');
+                
+                // Initialize UI manager
+                if (typeof uiManager !== 'undefined') {
+                    console.log('✅ UI Manager initialized');
+                }
+                
+                console.log('🚀 Game ready! Connect your wallet to play.');
+                
+            } catch (error) {
+                console.error('❌ Game initialization failed:', error);
+                
+                // Show error message to user
+                const walletStatus = document.getElementById('walletStatus');
+                if (walletStatus) {
+                    walletStatus.innerHTML = '❌ Game failed to load. Please refresh the page.';
+                    walletStatus.style.color = '#e74c3c';
+                }
+            }
+        });
+
+        // Global error handling
+        window.addEventListener('error', (event) => {
+            console.error('🐛 Game Error:', event.error);
+            
+            // Try to show error in chat if UI is available
+            if (typeof uiManager !== 'undefined' && uiManager.addChatMessage) {
+                uiManager.addChatMessage('System', `🐛 Error: ${event.error.message}`, '#e74c3c');
+            }
+        });
+
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('🔇 Game paused (tab hidden)');
+            } else {
+                console.log('🔊 Game resumed (tab visible)');
+            }
+        });
+
+        // Performance monitoring
+        let lastFPSUpdate = Date.now();
+        let frameCount = 0;
+        
+        function updateFPS() {
+            frameCount++;
+            const now = Date.now();
+            
+            if (now - lastFPSUpdate >= 1000) {
+                const fps = Math.round(frameCount * 1000 / (now - lastFPSUpdate));
+                
+                // Show FPS in console for debugging
+                if (fps < 30) {
+                    console.warn(`⚠️ Low FPS: ${fps}`);
+                }
+                
+                frameCount = 0;
+                lastFPSUpdate = now;
+            }
+            
+            requestAnimationFrame(updateFPS);
+        }
+        
+        // Start FPS monitoring in development
+        if (window.location.hostname === 'localhost') {
+            updateFPS();
+        }
+    </script>
+</body>
+</html>

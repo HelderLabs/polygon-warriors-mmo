@@ -1,0 +1,187 @@
+/* Main Game Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: #fff;
+    overflow: hidden;
+}
+
+/* Wallet Overlay */
+.wallet-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.wallet-modal {
+    background: linear-gradient(135deg, #2d1b69, #11998e);
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    border: 2px solid #38ef7d;
+}
+
+.connect-btn {
+    background: linear-gradient(45deg, #38ef7d, #11998e);
+    border: none;
+    padding: 1rem 2rem;
+    margin: 1rem;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.connect-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Game Container */
+.game-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    display: none;
+}
+
+.game-canvas {
+    background: linear-gradient(45deg, #0f3460, #16537e);
+    border: 2px solid #38ef7d;
+}
+
+/* UI Elements */
+.ui-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.ui-element {
+    pointer-events: auto;
+}
+
+.hud {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(0,0,0,0.8);
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid #38ef7d;
+}
+
+.player-list {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.8);
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid #38ef7d;
+    min-width: 200px;
+}
+
+.chat {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    width: 300px;
+    background: rgba(0,0,0,0.8);
+    border-radius: 10px;
+    border: 1px solid #38ef7d;
+}
+
+.chat-messages {
+    height: 150px;
+    overflow-y: auto;
+    padding: 1rem;
+    font-size: 12px;
+}
+
+.chat-input {
+    width: 100%;
+    padding: 0.5rem;
+    background: transparent;
+    border: none;
+    border-top: 1px solid #38ef7d;
+    color: white;
+    outline: none;
+}
+
+.loading {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    z-index: 500;
+}
+
+.controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.8);
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid #38ef7d;
+}
+
+.skill-btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    padding: 0.5rem 1rem;
+    margin: 0.2rem;
+    border-radius: 5px;
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.skill-btn:hover {
+    transform: scale(1.1);
+}
+
+.skill-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.status-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+    margin: 0.2rem 0;
+    overflow: hidden;
+}
+
+.health-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #ff6b6b, #ee5a24);
+    transition: width 0.3s ease;
+}
+
+.mana-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #3742fa, #2f3542);
+    transition: width 0.3s ease;
+}

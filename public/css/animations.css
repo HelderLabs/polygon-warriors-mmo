@@ -1,0 +1,43 @@
+/* Game Animations & Effects */
+.damage-number {
+    position: absolute;
+    color: #ff6b6b;
+    font-weight: bold;
+    font-size: 14px;
+    pointer-events: none;
+    z-index: 200;
+    animation: floatUp 1s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0px); }
+    100% { opacity: 0; transform: translateY(-30px); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+
+.skill-btn.cooling {
+    animation: pulse 0.5s ease-in-out;
+}
+
+.player.damaged {
+    animation: shake 0.3s ease-in-out;
+}
+
+.effect-explosion {
+    animation: pulse 0.8s ease-out;
+}
+
+.effect-heal {
+    animation: pulse 1.5s ease-in-out;
+}
