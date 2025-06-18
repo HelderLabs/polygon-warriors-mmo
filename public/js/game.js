@@ -1,5 +1,265 @@
 console.log("🎨 SpriteManager loading...");
 
+// Enemy AI System for moving monsters
+class EnemyAI {
+    constructor() {
+        this.enemies = new Map();
+        console.log("🤖 EnemyAI system initialized");
+    }
+
+    addEnemy(enemy) {
+        const aiData = {
+            id: enemy.id,
+            type: enemy.type,
+            state: 'patrol', // patrol, chase, attack, flee
+            target: null,
+            patrolCenter: { x: enemy.x, y: enemy.y },
+            patrolRadius: 150,
+            patrolAngle: Math.random() * Math.PI * 2,
+            lastStateChange: Date.now(),
+            attackCooldown: 0,
+            chaseRange: 200,
+            attackRange: 80,
+            speed: this.getEnemySpeed(enemy.type),
+            lastAttack: 0
+        };
+        this.enemies.set(enemy.id, aiData);
+        console.log(`🤖 Added AI for ${enemy.type}: ${enemy.name}`);
+    }
+
+    getEnemySpeed(type) {
+        switch (type) {
+            case 'goblin': return 0.15; // Fast and nimble
+            case 'orc': return 0.1; // Slow but powerful
+            case 'skeleton': return 0.12; // Medium speed
+            default: return 0.1;
+        }
+    }
+
+    updateEnemies(deltaTime, players, playerPosition) {
+        this.enemies.forEach((aiData, enemyId) => {
+            const enemy = players.get(enemyId);
+            if (!enemy || enemy.health <= 0) {
+                this.enemies.delete(enemyId);
+                return;
+            }
+
+            this.updateEnemyAI(enemy, aiData, deltaTime, playerPosition, players);
+        });
+    }
+
+    updateEnemyAI(enemy, aiData, deltaTime, playerPosition, players) {
+        const now = Date.now();
+        const distanceToPlayer = this.calculateDistance(enemy, playerPosition);
+
+        // State transitions
+        switch (aiData.state) {
+            case 'patrol':
+                if (distanceToPlayer < aiData.chaseRange) {
+                    aiData.state = 'chase';
+                    aiData.target = playerPosition;
+                    aiData.lastStateChange = now;
+                }
+                break;
+
+            case 'chase':
+                if (distanceToPlayer > aiData.chaseRange * 1.5) {
+                    aiData.state = 'patrol';
+                    aiData.lastStateChange = now;
+                } else if (distanceToPlayer < aiData.attackRange) {
+                    aiData.state = 'attack';
+                    aiData.lastStateChange = now;
+                }
+                break;
+
+            case 'attack':
+                if (distanceToPlayer > aiData.attackRange * 1.2) {
+                    aiData.state = 'chase';
+                    aiData.lastStateChange = now;
+                }
+                break;
+
+            case 'flee':
+                if (now - aiData.lastStateChange > 3000) { // Flee for 3 seconds
+                    aiData.state = 'patrol';
+                    aiData.lastStateChange = now;
+                }
+                break;
+        }
+
+        // Execute behavior based on current state
+        this.executeEnemyBehavior(enemy, aiData, deltaTime, playerPosition, players);
+    }
+
+    executeEnemyBehavior(enemy, aiData, deltaTime, playerPosition, players) {
+        const oldX = enemy.x;
+        const oldY = enemy.y;
+
+        switch (aiData.state) {
+            case 'patrol':
+                this.patrolBehavior(enemy, aiData, deltaTime);
+                break;
+
+            case 'chase':
+                this.chaseBehavior(enemy, aiData, deltaTime, playerPosition);
+                break;
+
+            case 'attack':
+                this.attackBehavior(enemy, aiData, deltaTime, playerPosition, players);
+                break;
+
+            case 'flee':
+                this.fleeBehavior(enemy, aiData, deltaTime, playerPosition);
+                break;
+        }
+
+        // Check wall collision and revert if needed
+        if (terrainManager.checkWallCollision(enemy)) {
+            enemy.x = oldX;
+            enemy.y = oldY;
+            // Change direction if hit wall
+            aiData.patrolAngle += Math.PI / 2;
+        }
+
+        // Update facing direction and movement state
+        const deltaX = enemy.x - oldX;
+        if (Math.abs(deltaX) > 0.1) {
+            enemy.facing = deltaX > 0 ? 1 : -1;
+            enemy.isMoving = true;
+        } else {
+            enemy.isMoving = false;
+        }
+    }
+
+    patrolBehavior(enemy, aiData, deltaTime) {
+        // Circular patrol around spawn point
+        aiData.patrolAngle += 0.002 * deltaTime;
+        
+        const targetX = aiData.patrolCenter.x + Math.cos(aiData.patrolAngle) * aiData.patrolRadius;
+        const targetY = aiData.patrolCenter.y + Math.sin(aiData.patrolAngle) * aiData.patrolRadius;
+        
+        const dx = targetX - enemy.x;
+        const dy = targetY - enemy.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 5) {
+            enemy.x += (dx / distance) * aiData.speed * deltaTime;
+            enemy.y += (dy / distance) * aiData.speed * deltaTime;
+        }
+    }
+
+    chaseBehavior(enemy, aiData, deltaTime, playerPosition) {
+        const dx = playerPosition.x - enemy.x;
+        const dy = playerPosition.y - enemy.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 5) {
+            // Move towards player with increased speed
+            const chaseSpeed = aiData.speed * 1.5;
+            enemy.x += (dx / distance) * chaseSpeed * deltaTime;
+            enemy.y += (dy / distance) * chaseSpeed * deltaTime;
+        }
+    }
+
+    attackBehavior(enemy, aiData, deltaTime, playerPosition, players) {
+        const now = Date.now();
+        
+        // Attack cooldown based on enemy type
+        let attackCooldown = 2000; // Default 2 seconds
+        switch (aiData.type) {
+            case 'goblin': attackCooldown = 1500; break;
+            case 'orc': attackCooldown = 2500; break;
+            case 'skeleton': attackCooldown = 1800; break;
+        }
+
+        if (now - aiData.lastAttack > attackCooldown) {
+            this.performEnemyAttack(enemy, aiData, playerPosition, players);
+            aiData.lastAttack = now;
+        }
+
+        // Stay close to player while attacking
+        const dx = playerPosition.x - enemy.x;
+        const dy = playerPosition.y - enemy.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > aiData.attackRange * 0.7) {
+            enemy.x += (dx / distance) * aiData.speed * 0.5 * deltaTime;
+            enemy.y += (dy / distance) * aiData.speed * 0.5 * deltaTime;
+        }
+    }
+
+    fleeBehavior(enemy, aiData, deltaTime, playerPosition) {
+        // Run away from player
+        const dx = enemy.x - playerPosition.x;
+        const dy = enemy.y - playerPosition.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 0) {
+            const fleeSpeed = aiData.speed * 2;
+            enemy.x += (dx / distance) * fleeSpeed * deltaTime;
+            enemy.y += (dy / distance) * fleeSpeed * deltaTime;
+        }
+    }
+
+    performEnemyAttack(enemy, aiData, playerPosition, players) {
+        // Set attack animation state
+        enemy.isAttacking = true;
+        setTimeout(() => { enemy.isAttacking = false; }, 500);
+
+        // Calculate damage based on enemy type
+        let damage = 15;
+        let attackMessage = '';
+        switch (aiData.type) {
+            case 'goblin': 
+                damage = 10; 
+                attackMessage = `🗡️ ${enemy.name} stabs with a rusty dagger!`;
+                break;
+            case 'orc': 
+                damage = 25; 
+                attackMessage = `🪓 ${enemy.name} swings a massive axe!`;
+                break;
+            case 'skeleton': 
+                damage = 20; 
+                attackMessage = `🏹 ${enemy.name} shoots a bone arrow!`;
+                break;
+        }
+
+        // Apply damage to player if in range
+        const distance = this.calculateDistance(enemy, playerPosition);
+        if (distance < aiData.attackRange) {
+            gameState.player.health = Math.max(0, gameState.player.health - damage);
+            
+            // Show damage effect
+            if (typeof uiManager !== 'undefined') {
+                uiManager.showDamageNumber(playerPosition.x, playerPosition.y, damage);
+                uiManager.addChatMessage('System', attackMessage, '#ff6b6b');
+            }
+
+            // Check if player died
+            if (gameState.player.health <= 0) {
+                if (typeof uiManager !== 'undefined') {
+                    uiManager.addChatMessage('System', '💀 You have been defeated!', '#ff6b6b');
+                }
+            }
+        }
+    }
+
+    // Trigger flee behavior for goblins when low health
+    checkFleeCondition(enemy, aiData) {
+        if (aiData.type === 'goblin' && enemy.health < 30 && aiData.state !== 'flee') {
+            aiData.state = 'flee';
+            aiData.lastStateChange = Date.now();
+            if (typeof uiManager !== 'undefined') {
+                uiManager.addChatMessage('System', `🏃 ${enemy.name} flees in terror!`, '#feca57');
+            }
+        }
+    }
+
+    calculateDistance(pos1, pos2) {
+        return Math.sqrt(Math.pow(pos2.x - pos1.x, 2) + Math.pow(pos2.y - pos1.y, 2));
+    }
+}
+
 // Enhanced Player Sprite System for Polygon Warriors
 class SpriteManager {
     constructor() {
@@ -301,7 +561,8 @@ class GameManager {
         this.lastUpdate = Date.now();
         this.running = false;
         this.spriteManager = new SpriteManager();
-        console.log("🎮 GameManager created with SpriteManager");
+        this.enemyAI = new EnemyAI(); // Add AI system
+        console.log("🎮 GameManager created with SpriteManager and EnemyAI");
     }
 
     async initializeGame() {
@@ -381,6 +642,10 @@ class GameManager {
     update(deltaTime) {
         this.updatePlayerMovement(deltaTime);
         this.updatePlayers(deltaTime);
+        
+        // Update enemy AI for moving monsters
+        this.enemyAI.updateEnemies(deltaTime, gameState.players, gameState.player);
+        
         effectsManager.updateEffects(deltaTime);
         this.updateSkillCooldowns();
     }
@@ -429,7 +694,14 @@ class GameManager {
             if (player.health <= 0) {
                 uiManager.addChatMessage('System', `💀 ${player.name} has been defeated!`, '#ff6b6b');
                 gameState.players.delete(id);
+                this.enemyAI.enemies.delete(id); // Remove from AI system
                 uiManager.updatePlayerList();
+            } else if (player.isEnemy) {
+                // Check flee condition for goblins
+                const aiData = this.enemyAI.enemies.get(id);
+                if (aiData) {
+                    this.enemyAI.checkFleeCondition(player, aiData);
+                }
             }
         });
     }
@@ -575,7 +847,10 @@ class GameManager {
                 x: Math.random() * (this.canvas.width - 200) + 100,
                 y: Math.random() * (this.canvas.height - 200) + 100,
                 health: 100,
-                level: Math.floor(Math.random() * 3) + 1
+                level: Math.floor(Math.random() * 3) + 1,
+                facing: 1,
+                isMoving: false,
+                isAttacking: false
             };
             
             while (terrainManager.checkWallCollision(mockPlayer)) {
@@ -584,9 +859,13 @@ class GameManager {
             }
             
             gameState.players.set(mockPlayer.id, mockPlayer);
+            
+            // Add to AI system for movement and behavior
+            this.enemyAI.addEnemy(mockPlayer);
         }
 
         uiManager.updatePlayerList();
+        console.log("🏹 Added 3 moving enemies with AI behavior!");
     }
 
     calculateDistance(pos1, pos2) {
