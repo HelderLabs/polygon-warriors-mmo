@@ -683,3 +683,4 @@ const gameManager = new GameManager();
 // Initialize when page loads
 window.addEventListener('load', async () => {
     await gameManager.initializeGame();
+});
