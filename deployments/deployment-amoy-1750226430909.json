@@ -1,0 +1,34 @@
+{
+  "network": {
+    "name": "amoy",
+    "chainId": 80002,
+    "rpcUrl": "https://rpc-amoy.polygon.technology/",
+    "explorer": "https://amoy.polygonscan.com/"
+  },
+  "contracts": {
+    "WarriorToken": {
+      "address": "0x5D6471B6D096dE27cd7C7460e1d814Ce672d777f",
+      "name": "Warrior Gold",
+      "symbol": "WGOLD",
+      "totalSupply": "1000000.0",
+      "explorerUrl": "https://amoy.polygonscan.com/address/0x5D6471B6D096dE27cd7C7460e1d814Ce672d777f"
+    },
+    "WarriorNFT": {
+      "address": "0xA2e62D7FeBBeFe0eF5B028bB510406a642F9b26b",
+      "name": "Polygon Warriors",
+      "symbol": "PWAR",
+      "baseURI": "https://api.polygonwarriors.com/metadata/",
+      "mintPrice": "0.01",
+      "explorerUrl": "https://amoy.polygonscan.com/address/0xA2e62D7FeBBeFe0eF5B028bB510406a642F9b26b"
+    },
+    "PolygonWarriorsGame": {
+      "address": "0x4745f0e154cb392aA8aDad1CCD14F7BcE39A3EB9",
+      "battleCooldown": "300",
+      "explorerUrl": "https://amoy.polygonscan.com/address/0x4745f0e154cb392aA8aDad1CCD14F7BcE39A3EB9"
+    }
+  },
+  "deployment": {
+    "deployer": "0x600Df9a4548A568ea746BFC20B2b203367733D58",
+    "timestamp": "2025-06-18T06:00:30.909Z"
+  }
+}

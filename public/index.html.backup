@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polygon Warriors - Web3 MMO</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .wallet-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .wallet-modal {
+            background: linear-gradient(135deg, #2d1b69, #11998e);
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid #38ef7d;
+        }
+
+        .connect-btn {
+            background: linear-gradient(45deg, #38ef7d, #11998e);
+            border: none;
+            padding: 1rem 2rem;
+            margin: 1rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .connect-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            display: none;
+        }
+
+        .game-canvas {
+            background: linear-gradient(45deg, #0f3460, #16537e);
+            border: 2px solid #38ef7d;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .ui-element {
+            pointer-events: auto;
+        }
+
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid #38ef7d;
+        }
+
+        .player-list {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid #38ef7d;
+            min-width: 200px;
+        }
+
+        .chat {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 300px;
+            background: rgba(0,0,0,0.8);
+            border-radius: 10px;
+            border: 1px solid #38ef7d;
+        }
+
+        .chat-messages {
+            height: 150px;
+            overflow-y: auto;
+            padding: 1rem;
+            font-size: 12px;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 0.5rem;
+            background: transparent;
+            border: none;
+            border-top: 1px solid #38ef7d;
+            color: white;
+            outline: none;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            z-index: 500;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid #38ef7d;
+        }
+
+        .skill-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            padding: 0.5rem 1rem;
+            margin: 0.2rem;
+            border-radius: 5px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .skill-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .status-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            margin: 0.2rem 0;
+            overflow: hidden;
+        }
+
+        .health-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ee5a24);
+            transition: width 0.3s ease;
+        }
+
+        .mana-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3742fa, #2f3542);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Wallet Connection Overlay -->
+    <div id="walletOverlay" class="wallet-overlay">
+        <div class="wallet-modal">
+            <h1>🗡️ Polygon Warriors</h1>
+            <p>Connect your Polygon wallet to enter the battlefield</p>
+            <button class="connect-btn" onclick="connectWallet()">Connect MetaMask</button>
+            <div id="walletStatus"></div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading" class="loading" style="display: none;">
+        ⚔️ Entering the Arena...
+    </div>
+
+    <!-- Main Game Container -->
+    <div id="gameContainer" class="game-container">
+        <canvas id="gameCanvas" class="game-canvas"></canvas>
+        
+        <div class="ui-overlay">
+            <!-- HUD -->
+            <div class="hud ui-element">
+                <div><strong>Warrior:</strong> <span id="playerName">Loading...</span></div>
+                <div><strong>Level:</strong> <span id="playerLevel">1</span></div>
+                <div><strong>Gold:</strong> <span id="playerGold">0</span></div>
+                <div class="status-bar">
+                    <div class="health-bar" id="healthBar" style="width: 100%;"></div>
+                </div>
+                <div class="status-bar">
+                    <div class="mana-bar" id="manaBar" style="width: 100%;"></div>
+                </div>
+            </div>
+
+            <!-- Player List -->
+            <div class="player-list ui-element">
+                <h3>Warriors Online</h3>
+                <div id="playerListContent">
+                    <div>Loading players...</div>
+                </div>
+            </div>
+
+            <!-- Chat -->
+            <div class="chat ui-element">
+                <div class="chat-messages" id="chatMessages">
+                    <div style="color: #38ef7d;">Welcome to Polygon Warriors!</div>
+                    <div style="color: #feca57;">Use WASD to move, click to attack</div>
+                </div>
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type message..." maxlength="100">
+            </div>
+
+            <!-- Controls -->
+            <div class="controls ui-element">
+                <h4>Skills</h4>
+                <button class="skill-btn" onclick="castSkill('fireball')">🔥 Fireball</button>
+                <button class="skill-btn" onclick="castSkill('heal')">💚 Heal</button>
+                <button class="skill-btn" onclick="castSkill('shield')">🛡️ Shield</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
+    <script>
+        // Game State
+        let gameState = {
+            connected: false,
+            wallet: null,
+            web3: null,
+            player: {
+                id: null,
+                x: 400,
+                y: 300,
+                health: 100,
+                mana: 100,
+                level: 1,
+                gold: 0,
+                name: ''
+            },
+            players: new Map(),
+            canvas: null,
+            ctx: null,
+            keys: {},
+            lastUpdate: Date.now()
+        };
+
+        // Polygon Amoy Testnet Configuration
+        const POLYGON_CONFIG = {
+            chainId: '0x13882', // Amoy testnet
+            chainName: 'Polygon Amoy Testnet',
+            nativeCurrency: {
+                name: 'MATIC',
+                symbol: 'MATIC',
+                decimals: 18
+            },
+            rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+            blockExplorerUrls: ['https://amoy.polygonscan.com/']
+        };
+
+        // Initialize game when page loads
+        window.addEventListener('load', async () => {
+            await initializeGame();
+        });
+
+        async function connectWallet() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    document.getElementById('walletStatus').innerHTML = 'Connecting...';
+                    
+                    const web3 = new Web3(window.ethereum);
+                    const accounts = await window.ethereum.request({ 
+                        method: 'eth_requestAccounts' 
+                    });
+
+                    // Switch to Polygon Amoy
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: POLYGON_CONFIG.chainId }],
+                        });
+                    } catch (switchError) {
+                        if (switchError.code === 4902) {
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [POLYGON_CONFIG],
+                            });
+                        }
+                    }
+
+                    gameState.web3 = web3;
+                    gameState.wallet = accounts[0];
+                    gameState.player.id = accounts[0].slice(-8);
+                    gameState.player.name = `Warrior_${accounts[0].slice(-4)}`;
+                    
+                    document.getElementById('walletStatus').innerHTML = 
+                        `✅ Connected: ${accounts[0].slice(0,6)}...${accounts[0].slice(-4)}`;
+                    
+                    setTimeout(() => {
+                        document.getElementById('walletOverlay').style.display = 'none';
+                        document.getElementById('loading').style.display = 'block';
+                        
+                        setTimeout(() => {
+                            document.getElementById('loading').style.display = 'none';
+                            document.getElementById('gameContainer').style.display = 'block';
+                            startGame();
+                        }, 2000);
+                    }, 1000);
+
+                } catch (error) {
+                    document.getElementById('walletStatus').innerHTML = '❌ Connection failed';
+                    console.error('Wallet connection error:', error);
+                }
+            } else {
+                document.getElementById('walletStatus').innerHTML = '❌ MetaMask not detected';
+            }
+        }
+
+        async function initializeGame() {
+            const canvas = document.getElementById('gameCanvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            gameState.canvas = canvas;
+            gameState.ctx = canvas.getContext('2d');
+
+            // Setup event listeners
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            // Keyboard controls
+            document.addEventListener('keydown', (e) => {
+                gameState.keys[e.key.toLowerCase()] = true;
+                if (e.key === 'Enter') {
+                    const chatInput = document.getElementById('chatInput');
+                    if (document.activeElement !== chatInput) {
+                        chatInput.focus();
+                    } else {
+                        sendChatMessage();
+                    }
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                gameState.keys[e.key.toLowerCase()] = false;
+            });
+
+            // Mouse controls
+            gameState.canvas.addEventListener('click', (e) => {
+                const rect = gameState.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                performAttack(x, y);
+            });
+
+            // Chat input
+            document.getElementById('chatInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendChatMessage();
+                }
+            });
+
+            // Window resize
+            window.addEventListener('resize', () => {
+                gameState.canvas.width = window.innerWidth;
+                gameState.canvas.height = window.innerHeight;
+            });
+        }
+
+        function startGame() {
+            gameState.connected = true;
+            updateUI();
+            
+            // Add some mock players for demo
+            addMockPlayers();
+            
+            // Start game loop
+            gameLoop();
+        }
+
+        function gameLoop() {
+            if (!gameState.connected) return;
+
+            const now = Date.now();
+            const deltaTime = now - gameState.lastUpdate;
+            
+            if (deltaTime > 16) { // ~60 FPS
+                update(deltaTime);
+                render();
+                gameState.lastUpdate = now;
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function update(deltaTime) {
+            // Update player position based on input
+            const speed = 0.2;
+            const player = gameState.player;
+
+            if (gameState.keys['w'] || gameState.keys['arrowup']) {
+                player.y = Math.max(20, player.y - speed * deltaTime);
+            }
+            if (gameState.keys['s'] || gameState.keys['arrowdown']) {
+                player.y = Math.min(gameState.canvas.height - 20, player.y + speed * deltaTime);
+            }
+            if (gameState.keys['a'] || gameState.keys['arrowleft']) {
+                player.x = Math.max(20, player.x - speed * deltaTime);
+            }
+            if (gameState.keys['d'] || gameState.keys['arrowright']) {
+                player.x = Math.min(gameState.canvas.width - 20, player.x + speed * deltaTime);
+            }
+
+            // Regenerate mana slowly
+            player.mana = Math.min(100, player.mana + 0.01 * deltaTime);
+        }
+
+        function render() {
+            const ctx = gameState.ctx;
+            const canvas = gameState.canvas;
+
+            // Clear canvas
+            ctx.fillStyle = 'rgba(16, 83, 126, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid pattern
+            ctx.strokeStyle = 'rgba(56, 239, 125, 0.1)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw players
+            gameState.players.forEach(player => {
+                drawPlayer(player, false);
+            });
+
+            // Draw self
+            drawPlayer(gameState.player, true);
+        }
+
+        function drawPlayer(player, isSelf) {
+            const ctx = gameState.ctx;
+            
+            // Player circle
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, 12, 0, Math.PI * 2);
+            ctx.fillStyle = isSelf ? '#38ef7d' : '#ff6b6b';
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Health bar above player
+            const barWidth = 30;
+            const barHeight = 4;
+            const barX = player.x - barWidth / 2;
+            const barY = player.y - 20;
+
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+            
+            ctx.fillStyle = '#ff6b6b';
+            ctx.fillRect(barX, barY, (player.health / 100) * barWidth, barHeight);
+
+            // Player name
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText(player.name || 'Warrior', player.x, player.y - 25);
+        }
+
+        function performAttack(x, y) {
+            if (gameState.player.mana < 20) return;
+
+            gameState.player.mana -= 20;
+            
+            // Visual attack effect
+            const ctx = gameState.ctx;
+            ctx.strokeStyle = '#38ef7d';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(gameState.player.x, gameState.player.y);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+            // Add to chat
+            addChatMessage('System', '⚔️ Attack launched!', '#feca57');
+            
+            setTimeout(() => updateUI(), 100);
+        }
+
+        function castSkill(skillName) {
+            const manaCost = { fireball: 30, heal: 25, shield: 35 };
+            if (gameState.player.mana < manaCost[skillName]) return;
+
+            gameState.player.mana -= manaCost[skillName];
+
+            switch(skillName) {
+                case 'fireball':
+                    addChatMessage('System', '🔥 Fireball cast!', '#ff6b6b');
+                    break;
+                case 'heal':
+                    gameState.player.health = Math.min(100, gameState.player.health + 25);
+                    addChatMessage('System', '💚 Health restored!', '#38ef7d');
+                    break;
+                case 'shield':
+                    addChatMessage('System', '🛡️ Shield activated!', '#3742fa');
+                    break;
+            }
+
+            updateUI();
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                addChatMessage(gameState.player.name, message, '#38ef7d');
+                input.value = '';
+            }
+        }
+
+        function addChatMessage(sender, message, color = '#fff') {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.style.color = color;
+            messageDiv.innerHTML = `<strong>${sender}:</strong> ${message}`;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Limit chat history
+            while (chatMessages.children.length > 50) {
+                chatMessages.removeChild(chatMessages.firstChild);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('playerName').textContent = gameState.player.name;
+            document.getElementById('playerLevel').textContent = gameState.player.level;
+            document.getElementById('playerGold').textContent = gameState.player.gold;
+            
+            document.getElementById('healthBar').style.width = `${gameState.player.health}%`;
+            document.getElementById('manaBar').style.width = `${gameState.player.mana}%`;
+        }
+
+        function addMockPlayers() {
+            // Add some demo players
+            for (let i = 0; i < 3; i++) {
+                const mockPlayer = {
+                    id: `demo_${i}`,
+                    name: `Demo_${i}`,
+                    x: Math.random() * (gameState.canvas.width - 100) + 50,
+                    y: Math.random() * (gameState.canvas.height - 100) + 50,
+                    health: 100,
+                    level: Math.floor(Math.random() * 5) + 1
+                };
+                gameState.players.set(mockPlayer.id, mockPlayer);
+            }
+
+            // Update player list UI
+            updatePlayerList();
+        }
+
+        function updatePlayerList() {
+            const playerListContent = document.getElementById('playerListContent');
+            let html = `<div style="color: #38ef7d;">👑 ${gameState.player.name} (You)</div>`;
+            
+            gameState.players.forEach(player => {
+                html += `<div>⚔️ ${player.name} (Lv.${player.level})</div>`;
+            });
+
+            playerListContent.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
