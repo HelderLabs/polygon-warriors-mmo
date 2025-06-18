@@ -565,9 +565,6 @@ class GameManager {
         this.drawPlayer(gameState.player, true);
     }
 
-// Enhanced drawPlayer method for GameManager
-// Replace the existing drawPlayer method in your GameManager class with this:
-
 drawPlayer(player, isSelf) {
     const ctx = this.ctx;
     
