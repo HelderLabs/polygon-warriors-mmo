@@ -10,3 +10,4 @@ A minimalist Web3 MMO game built on Polygon blockchain where players battle with
 - **Token Economy**: Earn WGOLD tokens through battles
 - **Destructible Terrain**: Burn grass, destroy rocks with skills
 - **Polygon Network**: Fast and cheap transactions
+// Force redeploy
